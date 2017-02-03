@@ -1,7 +1,7 @@
 /* jshint -W097 */ // jshint strict:false
 /*jslint node: true */
 
-"use strict";
+'use strict';
 var utils = require(__dirname + '/lib/utils'); // Get common adapter utils
 var request = require('request');
 var lang = 'de';
@@ -42,12 +42,12 @@ function controlHomepilot(id, input) {
     // example for subscribed id: "homepilot.0.devices.RolloTronStandard.10000.level"
     var controller_array = id.split('.');
     var controller       = controller_array[5];
-    var deviceid         = parseInt(controller_array[4],10);
+    var deviceid         = parseInt(controller_array[4], 10);
     var url;
     var valid = false;
     var newcid;
     adapter.log.debug('State: ' + controller + '  device: ' + deviceid + '  command: ' + input);
-    if (controller == 'cid') { // control via cid
+    if (controller === 'cid') { // control via cid
         // hier CID auf Plausibiliät checken
         switch (input) {
             case "1":
@@ -122,6 +122,7 @@ function controlHomepilot(id, input) {
             case "an":
             case "ON":
             case "on":
+            case "true":
                 newcid = 10;
                 valid = true;
                 break;
@@ -130,6 +131,7 @@ function controlHomepilot(id, input) {
             case "aus":
             case "OFF":
             case "off":
+            case "false":
                 newcid = 11;
                 valid = true;
                 break;
@@ -154,7 +156,7 @@ function controlHomepilot(id, input) {
 
         if (valid) url = 'http://' + ip + '/deviceajax.do?did=' + deviceid + '&cid=' + newcid + '&command=1';
     } 
-    else if (controller == 'state') { // control via state e.g. Universal-Aktor switch
+    else if (controller === 'state') { // control via state e.g. Universal-Aktor switch
         if (input.search(/(true)|(EIN)|(AN)|(ON)|([10-11])|(false)|(AUS)|(OFF)\b\b/gmi) != -1) { // check if "true" or "false"
             valid = true;
             if (input.search(/(true)|(EIN)|(AN)|(ON)|(10)\b\b/gmi) != -1 ) newcid = '10'; 
@@ -166,14 +168,14 @@ function controlHomepilot(id, input) {
             adapter.log.warn('Only use "ON/OFF", "true/false", "ein/aus" (all caseinsensitive) or "10/11" to control you switch');
         }
     } 
-    else if (controller == 'level') { // control via level e.g. RolloTronStandar.level
+    else if (controller === 'level') { // control via level e.g. RolloTronStandar.level
         // check if input number is between 0 an 100
         if (input.search(/(?:\b|-)([0-9]{1,2}[0]?|100)\b/gmi) != -1) { // 0 to 100 https://regex101.com/r/mN1iT5/6#javascript
             valid = true;
             url = 'http://' + ip + '/deviceajax.do?cid=9&did=' + deviceid + '&goto=' + input + '&command=1';
         } else valid = false;
     } 
-    else if (controller == 'level_inverted') { // control via inverted  level e.g. RolloTronStandar.level (like Homematic 100% up, 0% down)
+    else if (controller === 'level_inverted') { // control via inverted  level e.g. RolloTronStandar.level (like Homematic 100% up, 0% down)
         // check if input number is between 0 an 100
         if (input.search(/(?:\b|-)([0-9]{1,2}[0]?|100)\b/gmi) != -1) { // 0 to 100 https://regex101.com/r/mN1iT5/6#javascript
             valid = true;
@@ -200,14 +202,14 @@ function readSettings() {
 }
 
 function createStates(result, i) {
-    var product    = result.devices[i].productName.replace(/\s+/g, ''); // clear whitespaces in product name
-    var deviceid   = result.devices[i].did;
-    var devicename = result.devices[i].name;
-    var path = 'devices.' + product + '.' + deviceid;
+    var product     = result.devices[i].productName.replace(/\s+/g, ''); // clear whitespaces in product name
+    var deviceid    = result.devices[i].did;
+    var devicename  = result.devices[i].name;
+    var path        = 'devices.' + product + '.' + deviceid;
     var duoferncode = result.devices[i].serial;
     //var devicerole = (product.indexOf('RolloTron') != -1) ? 'blind' : 'switch' ; // tbd insert more products
     var devicerole;
-    switch (duoferncode.substring(0,2)) {
+    switch (duoferncode.substring(0, 2)) {
             case "40": // Rollotron Standard
             case "41": // Rollotron Comfort
             case "42": // Rohrmotor
@@ -316,7 +318,7 @@ function createStates(result, i) {
         },
         native: {}
     });
-    if (duoferncode.substring(0,2) == "43" || duoferncode.substring(0,2) == "46"/* || result.devices[i].productName === "Schaltaktor 2-Kanal" || result.devices[i].productName === "Schaltaktor 1-Kanal"*/) { // Universal-Aktor SWITCH
+    if (duoferncode.substring(0, 2) === '43' || duoferncode.substring(0, 2) === '46'/* || result.devices[i].productName === "Schaltaktor 2-Kanal" || result.devices[i].productName === "Schaltaktor 1-Kanal"*/) { // Universal-Aktor SWITCH
         adapter.setObjectNotExists(path + '.state', {
             type: 'state',
             common: {
@@ -368,7 +370,7 @@ function createStates(result, i) {
             write: true
         },
         native: {}
-    }, function(err, obj) {
+    }, function (err, obj) {
         if (!err && obj) adapter.log.info('Objects for ' + product + '(' + deviceid + ') created');
     });
 }
@@ -406,7 +408,7 @@ function writeStates(result, i) {
         ack: true
     });
     // STATE
-    if (duoferncode.substring(0,2) == "43" || duoferncode.substring(0,2) == "46"/* || result.devices[i].productName === "Universal-Aktor" || result.devices[i].productName === "Steckdosenaktor"*/) { // translate output level/position to boolean state for switches
+    if (duoferncode.substring(0, 2) === '43' || duoferncode.substring(0,2) === '46'/* || result.devices[i].productName === "Universal-Aktor" || result.devices[i].productName === "Steckdosenaktor"*/) { // translate output level/position to boolean state for switches
         var statevalue = (result.devices[i].position == 100 || result.devices[i].position === '100') ? true : false;
         adapter.setState(path + 'state', {
             val: statevalue,
@@ -428,7 +430,7 @@ function writeStates(result, i) {
 function readHomepilot() {
     var unreach = true;
     request(link, function(error, response, body) {
-        if (!error && response.statusCode == 200) {
+        if (!error && response.statusCode === 200) {
             var result;
             try {
                 result = JSON.parse(body);
@@ -469,7 +471,10 @@ function readHomepilot() {
 }
 
 function stopReadHomepilot() {
-    clearInterval(callReadHomepilot);
+    if (callReadHomepilot) {
+        clearInterval(callReadHomepilot);
+        callReadHomepilot = null;
+    }
     adapter.log.info('Homepilot adapter stopped');
 }
 
@@ -479,6 +484,7 @@ function main() {
     //adapter.subscribeStates('*.level*'); // subscribe all dp with name level
     readSettings();
     adapter.log.debug('Homepilot adapter started...');
+    
     callReadHomepilot = setInterval(function() {
         adapter.log.debug('reading homepilot JSON ...');
         readHomepilot();
